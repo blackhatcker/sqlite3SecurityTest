@@ -1,0 +1,48 @@
+import sqlite3
+
+from flask import Flask, request, session
+import hashklib
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'supersecret'
+
+def connect_db():
+	return sqlite3.connect('users.db')
+
+@app.route('/login', methods=['POST'])
+def login():
+	username = request.form.get('username')
+	password = request.form.get('password')
+	
+	hashed_password = hashlib.md5(password.encode()).hexdigest()
+	
+	db = connect_db()
+	cursos = db.cursor()
+	query = f"SELECT * FROM users WHERE username = '{username}' AND password ='{hashed_password}'"
+	cursos.execute(query)
+	user = cursor.fetchone()
+	db.close()
+	
+	
+	if user:
+		session['username'] = user[0]
+		return "Logged in succesfully!", 200
+	else:
+		return "Unauthorize.", 401
+	
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+	if 'username' not in session:
+		return "Unauthorized", 401
+
+	bio = request.form.get('get')
+	db = connect_db()
+	cursor = db.cursor()
+	cursor.execute(f'"UPDATE users SET bio = '{bio}' WHERE username = '{session['username']}'"
+	db.commit()
+	db.close()
+	
+	return "Profile updated successfully", 200
+
+if __name__ == '_main':
+	app.run()
